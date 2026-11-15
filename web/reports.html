@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html" class="active">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Reports</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Reports</div>
+
+            <!-- Summary Cards -->
+            <div class="cards-row">
+                <div class="card">
+                    <div class="card-number">24</div>
+                    <div class="card-label">Total Events</div>
+                </div>
+                <div class="card">
+                    <div class="card-number">1250</div>
+                    <div class="card-label">Total Students</div>
+                </div>
+                <div class="card">
+                    <div class="card-number">845</div>
+                    <div class="card-label">Total Registrations</div>
+                </div>
+                <div class="card">
+                    <div class="card-number">36</div>
+                    <div class="card-label">Volunteers</div>
+                </div>
+            </div>
+
+            <!-- Event Report -->
+            <div class="section-box">
+                <h2>Event Report</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event ID</th>
+                            <th>Event Name</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Venue</th>
+                            <th>Max</th>
+                            <th>Registered</th>
+                            <th>Fill %</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>E101</td><td>Hackathon</td><td>Technical</td><td>2026-10-10</td><td>Lab-1</td><td>50</td><td>42</td>
+                            <td>84%</td><td><span class="badge badge-green">Open</span></td>
+                        </tr>
+                        <tr>
+                            <td>E102</td><td>Dance Battle</td><td>Cultural</td><td>2026-10-12</td><td>Auditorium</td><td>100</td><td>76</td>
+                            <td>76%</td><td><span class="badge badge-green">Open</span></td>
+                        </tr>
+                        <tr>
+                            <td>E103</td><td>Cricket Tournament</td><td>Sports</td><td>2026-10-15</td><td>College Ground</td><td>100</td><td>88</td>
+                            <td>88%</td><td><span class="badge badge-orange">Filling</span></td>
+                        </tr>
+                        <tr>
+                            <td>E104</td><td>Coding Contest</td><td>Technical</td><td>2026-10-18</td><td>Lab-2</td><td>50</td><td>50</td>
+                            <td>100%</td><td><span class="badge badge-red">Full</span></td>
+                        </tr>
+                        <tr>
+                            <td>E105</td><td>Photography</td><td>Arts</td><td>2026-10-20</td><td>Hall-A</td><td>40</td><td>15</td>
+                            <td>38%</td><td><span class="badge badge-green">Open</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Registration Report -->
+            <div class="section-box">
+                <h2>Registration Report</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Confirmed</th>
+                            <th>Waiting</th>
+                            <th>Cancelled</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Hackathon</td><td>42</td><td>3</td><td>2</td><td>47</td></tr>
+                        <tr><td>Dance Battle</td><td>76</td><td>0</td><td>5</td><td>81</td></tr>
+                        <tr><td>Cricket Tournament</td><td>88</td><td>5</td><td>1</td><td>94</td></tr>
+                        <tr><td>Coding Contest</td><td>50</td><td>8</td><td>3</td><td>61</td></tr>
+                        <tr><td>Photography</td><td>15</td><td>0</td><td>0</td><td>15</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Attendance Report -->
+            <div class="section-box">
+                <h2>Attendance Report</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Registered</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Attendance %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Hackathon</td><td>42</td><td>38</td><td>4</td><td>90%</td></tr>
+                        <tr><td>Dance Battle</td><td>76</td><td>70</td><td>6</td><td>92%</td></tr>
+                        <tr><td>Cricket Tournament</td><td>88</td><td>80</td><td>8</td><td>91%</td></tr>
+                        <tr><td>Coding Contest</td><td>50</td><td>45</td><td>5</td><td>90%</td></tr>
+                        <tr><td>Photography</td><td>15</td><td>14</td><td>1</td><td>93%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Winner Report -->
+            <div class="section-box">
+                <h2>Winner Report</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>1st Place</th>
+                            <th>Score</th>
+                            <th>2nd Place</th>
+                            <th>Score</th>
+                            <th>3rd Place</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Hackathon</td>
+                            <td>Rahul Sharma (S101)</td><td>95</td>
+                            <td>Riya Singh (S104)</td><td>90</td>
+                            <td>Sneha Gupta (S106)</td><td>85</td>
+                        </tr>
+                        <tr>
+                            <td>Dance Battle</td>
+                            <td>Priya Patel (S102)</td><td>88</td>
+                            <td>Kunal Mehta (S105)</td><td>80</td>
+                            <td>—</td><td>—</td>
+                        </tr>
+                        <tr>
+                            <td>Coding Contest</td>
+                            <td>Rahul Sharma (S101)</td><td>92</td>
+                            <td>Aman Verma (S103)</td><td>78</td>
+                            <td>—</td><td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+</body>
+</html>

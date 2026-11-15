@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venues - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html" class="active">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Venues</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Venue Management</div>
+            <div id="alert-box"></div>
+
+            <!-- Add Venue Form -->
+            <div class="section-box">
+                <h2 id="form-heading">Add New Venue</h2>
+                <form id="venue-form" onsubmit="submitVenueForm(event)">
+                    <input type="hidden" id="venue-id-hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="venue-name">Venue Name *</label>
+                            <input type="text" id="venue-name" placeholder="e.g. Lab-1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="venue-type">Type *</label>
+                            <select id="venue-type" required>
+                                <option value="">-- Select --</option>
+                                <option>Lab</option>
+                                <option>Auditorium</option>
+                                <option>Ground</option>
+                                <option>Hall</option>
+                                <option>Classroom</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="venue-capacity">Capacity *</label>
+                            <input type="number" id="venue-capacity" placeholder="e.g. 60" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="venue-location">Location / Block</label>
+                            <input type="text" id="venue-location" placeholder="e.g. Block A">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success" id="form-submit-btn">Add Venue</button>
+                    <button type="button" class="btn btn-primary" onclick="resetForm()" style="margin-left:8px;">Clear</button>
+                </form>
+            </div>
+
+            <!-- Venue List -->
+            <div class="section-box">
+                <h2>All Venues</h2>
+                <div class="search-bar">
+                    <input type="text" id="search-venue" placeholder="Search venue..." oninput="filterVenues()">
+                    <select id="filter-type" onchange="filterVenues()">
+                        <option value="">All Types</option>
+                        <option>Lab</option>
+                        <option>Auditorium</option>
+                        <option>Ground</option>
+                        <option>Hall</option>
+                        <option>Classroom</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Venue ID</th>
+                            <th>Venue Name</th>
+                            <th>Type</th>
+                            <th>Capacity</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="venues-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-venues-msg" style="display:none;">No venues found.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script>
+let venues = [
+    { id: "V01", name: "Lab-1",         type: "Lab",        capacity: 60,  location: "Block A", status: "Available" },
+    { id: "V02", name: "Lab-2",         type: "Lab",        capacity: 60,  location: "Block A", status: "Booked" },
+    { id: "V03", name: "Auditorium",    type: "Auditorium", capacity: 500, location: "Main",    status: "Available" },
+    { id: "V04", name: "College Ground",type: "Ground",     capacity: 1000,location: "Campus",  status: "Booked" },
+    { id: "V05", name: "Hall-A",        type: "Hall",       capacity: 100, location: "Block B", status: "Available" },
+    { id: "V06", name: "Classroom 301", type: "Classroom",  capacity: 40,  location: "Block C", status: "Available" },
+];
+let nextVid = 7;
+let editingId = null;
+
+function renderVenues(data) {
+    const tbody = document.getElementById("venues-tbody");
+    const noMsg = document.getElementById("no-venues-msg");
+    if (data.length === 0) { tbody.innerHTML = ""; noMsg.style.display = "block"; return; }
+    noMsg.style.display = "none";
+    tbody.innerHTML = data.map(v => `
+        <tr>
+            <td>${v.id}</td>
+            <td>${v.name}</td>
+            <td>${v.type}</td>
+            <td>${v.capacity}</td>
+            <td>${v.location || "-"}</td>
+            <td>
+                <span class="badge ${v.status === 'Available' ? 'badge-green' : 'badge-red'}">${v.status}</span>
+            </td>
+            <td>
+                <button class="btn btn-warning btn-sm" onclick="editVenue('${v.id}')">Edit</button>
+                <button class="btn btn-${v.status === 'Available' ? 'gray' : 'success'} btn-sm" onclick="toggleStatus('${v.id}')" style="margin-left:4px; background-color:${v.status === 'Available' ? '#7f8c8d' : '#27ae60'}; border-color:${v.status === 'Available' ? '#7f8c8d' : '#27ae60'}; color:#fff;">${v.status === 'Available' ? 'Mark Booked' : 'Mark Free'}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteVenue('${v.id}')" style="margin-left:4px;">Delete</button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+function filterVenues() {
+    const search = document.getElementById("search-venue").value.toLowerCase();
+    const type   = document.getElementById("filter-type").value;
+    const filtered = venues.filter(v =>
+        v.name.toLowerCase().includes(search) &&
+        (type === "" || v.type === type)
+    );
+    renderVenues(filtered);
+}
+
+function submitVenueForm(e) {
+    e.preventDefault();
+    const name     = document.getElementById("venue-name").value.trim();
+    const type     = document.getElementById("venue-type").value;
+    const capacity = parseInt(document.getElementById("venue-capacity").value);
+    const location = document.getElementById("venue-location").value.trim();
+
+    if (editingId) {
+        let v = venues.find(x => x.id === editingId);
+        v.name = name; v.type = type; v.capacity = capacity; v.location = location;
+        showAlert("Venue updated.", "success");
+        editingId = null;
+        document.getElementById("form-heading").textContent = "Add New Venue";
+        document.getElementById("form-submit-btn").textContent = "Add Venue";
+    } else {
+        venues.push({ id: "V0" + nextVid++, name, type, capacity, location, status: "Available" });
+        showAlert("Venue added.", "success");
+    }
+    document.getElementById("venue-form").reset();
+    filterVenues();
+}
+
+function editVenue(id) {
+    const v = venues.find(x => x.id === id);
+    if (!v) return;
+    editingId = id;
+    document.getElementById("venue-name").value = v.name;
+    document.getElementById("venue-type").value = v.type;
+    document.getElementById("venue-capacity").value = v.capacity;
+    document.getElementById("venue-location").value = v.location;
+    document.getElementById("form-heading").textContent = "Edit Venue — " + v.id;
+    document.getElementById("form-submit-btn").textContent = "Update Venue";
+    window.scrollTo(0, 0);
+}
+
+function toggleStatus(id) {
+    const v = venues.find(x => x.id === id);
+    v.status = v.status === "Available" ? "Booked" : "Available";
+    filterVenues();
+}
+
+function deleteVenue(id) {
+    if (!confirm("Delete venue " + id + "?")) return;
+    venues = venues.filter(v => v.id !== id);
+    showAlert("Venue deleted.", "danger");
+    filterVenues();
+}
+
+function resetForm() {
+    editingId = null;
+    document.getElementById("venue-form").reset();
+    document.getElementById("form-heading").textContent = "Add New Venue";
+    document.getElementById("form-submit-btn").textContent = "Add Venue";
+}
+
+function showAlert(msg, type) {
+    const box = document.getElementById("alert-box");
+    box.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+    setTimeout(() => { box.innerHTML = ""; }, 3000);
+}
+
+filterVenues();
+</script>
+</body>
+</html>

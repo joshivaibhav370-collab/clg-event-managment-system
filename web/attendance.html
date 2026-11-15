@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html" class="active">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Attendance</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Attendance Management</div>
+            <div id="alert-box"></div>
+
+            <!-- Select Event -->
+            <div class="section-box">
+                <h2>Select Event</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="att-event">Event *</label>
+                        <select id="att-event" onchange="loadAttendance()">
+                            <option value="">-- Select Event --</option>
+                            <option value="E101">E101 - Hackathon</option>
+                            <option value="E102">E102 - Dance Battle</option>
+                            <option value="E103">E103 - Cricket Tournament</option>
+                            <option value="E104">E104 - Coding Contest</option>
+                            <option value="E105">E105 - Photography</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="align-self:flex-end;">
+                        <button class="btn btn-success" onclick="saveAttendance()">Save Attendance</button>
+                        <button class="btn btn-primary" onclick="markAll(true)" style="margin-left:8px;">Mark All Present</button>
+                        <button class="btn btn-warning" onclick="markAll(false)" style="margin-left:8px;">Mark All Absent</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Table -->
+            <div class="section-box" id="att-section" style="display:none;">
+                <h2 id="att-heading">Attendance — </h2>
+                <div class="mb-10">
+                    <span id="att-stats" class="text-muted"></span>
+                </div>
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Department</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="att-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Attendance Summary -->
+            <div class="section-box" id="att-summary-section" style="display:none;">
+                <h2>Saved Attendance Records</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Status</th>
+                            <th>Saved On</th>
+                        </tr>
+                    </thead>
+                    <tbody id="att-saved-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script>
+const eventNames = {
+    E101: "Hackathon",
+    E102: "Dance Battle",
+    E103: "Cricket Tournament",
+    E104: "Coding Contest",
+    E105: "Photography Contest",
+};
+
+const eventParticipants = {
+    E101: [
+        { id: "S101", name: "Rahul Sharma",  dept: "CSE" },
+        { id: "S104", name: "Riya Singh",    dept: "CSE" },
+        { id: "S106", name: "Sneha Gupta",   dept: "CE"  },
+    ],
+    E102: [
+        { id: "S102", name: "Priya Patel",   dept: "ECE" },
+        { id: "S105", name: "Kunal Mehta",   dept: "IT"  },
+    ],
+    E103: [
+        { id: "S104", name: "Riya Singh",    dept: "CSE" },
+        { id: "S103", name: "Aman Verma",    dept: "ME"  },
+    ],
+    E104: [
+        { id: "S101", name: "Rahul Sharma",  dept: "CSE" },
+        { id: "S103", name: "Aman Verma",    dept: "ME"  },
+    ],
+    E105: [
+        { id: "S102", name: "Priya Patel",   dept: "ECE" },
+        { id: "S106", name: "Sneha Gupta",   dept: "CE"  },
+    ],
+};
+
+let attendance = {}; // { "E101_S101": true/false }
+let savedRecords = [];
+let currentEvent = "";
+
+function loadAttendance() {
+    currentEvent = document.getElementById("att-event").value;
+    const section = document.getElementById("att-section");
+    if (!currentEvent) { section.style.display = "none"; return; }
+    section.style.display = "block";
+    document.getElementById("att-heading").textContent = "Attendance — " + eventNames[currentEvent];
+    renderAttTable();
+}
+
+function renderAttTable() {
+    const participants = eventParticipants[currentEvent] || [];
+    const tbody = document.getElementById("att-tbody");
+    tbody.innerHTML = participants.map(p => {
+        const key = currentEvent + "_" + p.id;
+        const present = attendance[key] !== undefined ? attendance[key] : false;
+        return `<tr id="row-${p.id}">
+            <td>${p.id}</td>
+            <td>${p.name}</td>
+            <td>${p.dept}</td>
+            <td style="text-align:center;"><input type="radio" name="att-${p.id}" id="p-${p.id}" value="present" ${present ? "checked" : ""} onchange="updateAtt('${p.id}', true)"></td>
+            <td style="text-align:center;"><input type="radio" name="att-${p.id}" id="a-${p.id}" value="absent"  ${!present ? "checked" : ""} onchange="updateAtt('${p.id}', false)"></td>
+            <td><span id="status-${p.id}" class="badge ${present ? 'badge-green' : 'badge-red'}">${present ? 'Present' : 'Absent'}</span></td>
+        </tr>`;
+    }).join("");
+    updateStats();
+}
+
+function updateAtt(studentId, isPresent) {
+    const key = currentEvent + "_" + studentId;
+    attendance[key] = isPresent;
+    const span = document.getElementById("status-" + studentId);
+    span.className = "badge " + (isPresent ? "badge-green" : "badge-red");
+    span.textContent = isPresent ? "Present" : "Absent";
+    updateStats();
+}
+
+function updateStats() {
+    const participants = eventParticipants[currentEvent] || [];
+    let presentCount = 0;
+    participants.forEach(p => {
+        const key = currentEvent + "_" + p.id;
+        if (attendance[key]) presentCount++;
+    });
+    document.getElementById("att-stats").textContent =
+        `Present: ${presentCount} / ${participants.length}  |  Absent: ${participants.length - presentCount}`;
+}
+
+function markAll(isPresent) {
+    if (!currentEvent) return;
+    const participants = eventParticipants[currentEvent] || [];
+    participants.forEach(p => {
+        const key = currentEvent + "_" + p.id;
+        attendance[key] = isPresent;
+        document.getElementById(isPresent ? "p-" + p.id : "a-" + p.id).checked = true;
+        const span = document.getElementById("status-" + p.id);
+        span.className = "badge " + (isPresent ? "badge-green" : "badge-red");
+        span.textContent = isPresent ? "Present" : "Absent";
+    });
+    updateStats();
+}
+
+function saveAttendance() {
+    if (!currentEvent) { showAlert("Please select an event first.", "warning"); return; }
+    const participants = eventParticipants[currentEvent] || [];
+    const today = new Date().toISOString().slice(0, 10);
+    participants.forEach(p => {
+        const key = currentEvent + "_" + p.id;
+        const existing = savedRecords.findIndex(r => r.event === currentEvent && r.studentId === p.id);
+        const record = { event: eventNames[currentEvent], studentId: p.id, name: p.name, status: attendance[key] ? "Present" : "Absent", date: today };
+        if (existing >= 0) savedRecords[existing] = record;
+        else savedRecords.push(record);
+    });
+    showAlert("Attendance saved successfully.", "success");
+    renderSavedRecords();
+}
+
+function renderSavedRecords() {
+    const tbody = document.getElementById("att-saved-tbody");
+    const section = document.getElementById("att-summary-section");
+    if (savedRecords.length === 0) { section.style.display = "none"; return; }
+    section.style.display = "block";
+    tbody.innerHTML = savedRecords.map(r => `
+        <tr>
+            <td>${r.event}</td>
+            <td>${r.studentId}</td>
+            <td>${r.name}</td>
+            <td><span class="badge ${r.status === 'Present' ? 'badge-green' : 'badge-red'}">${r.status}</span></td>
+            <td>${r.date}</td>
+        </tr>
+    `).join("");
+}
+
+function showAlert(msg, type) {
+    const box = document.getElementById("alert-box");
+    box.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+    setTimeout(() => { box.innerHTML = ""; }, 3000);
+}
+</script>
+</body>
+</html>

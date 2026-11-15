@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Event Registration</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Event Registration</div>
+            <div id="alert-box"></div>
+
+            <div class="section-box">
+                <h2>Register Student for Event</h2>
+                <form id="reg-form" onsubmit="registerStudent(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reg-student">Student *</label>
+                            <select id="reg-student" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-event">Event *</label>
+                            <select id="reg-event" required></select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Register</button>
+                    <button type="button" class="btn btn-warning" onclick="undoLast()" style="margin-left:8px;">Undo Last Action</button>
+                </form>
+                <p class="text-muted mt-10">If an event is full, the student goes to the waiting list (queue). Undo reverses the most recent registration (stack).</p>
+            </div>
+
+            <div class="section-box">
+                <h2>Confirmed Registrations</h2>
+                <table>
+                    <thead>
+                        <tr><th>Student ID</th><th>Student Name</th><th>Event ID</th><th>Event Name</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="reg-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-reg-msg" style="display:none;">No registrations yet.</div>
+            </div>
+
+            <div class="section-box">
+                <h2>Waiting Queue</h2>
+                <p class="text-muted mb-10">When a seat opens, the first waiting student for that event is confirmed automatically.</p>
+                <table>
+                    <thead>
+                        <tr><th>Position</th><th>Student ID</th><th>Student Name</th><th>Event</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="queue-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-queue-msg" style="display:none;">No students in waiting queue.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+// Rebuild a <select> but keep what the user had selected
+function fillSelect(id, items, label) {
+    const select = document.getElementById(id);
+    const old = select.value;
+    select.innerHTML = '<option value="">-- Select --</option>' +
+        items.map(item => `<option value="${esc(item.id)}">${esc(label(item))}</option>`).join("");
+    select.value = old;
+}
+
+function cancelButton(r) {
+    return `<button class="btn btn-danger btn-sm" data-student="${esc(r.studentId)}"
+            data-event="${esc(r.eventId)}" onclick="cancelReg(this)">Cancel</button>`;
+}
+
+async function loadAll() {
+    const students = await api("students") || [];
+    const events = await api("events") || [];
+    const regs = await api("registrations") || [];
+    const waiting = await api("waiting") || [];
+
+    fillSelect("reg-student", students, s => s.id + " - " + s.name);
+    fillSelect("reg-event", events, e => `${e.id} - ${e.name} (${e.registered}/${e.capacity})`);
+
+    document.getElementById("no-reg-msg").style.display = regs.length ? "none" : "block";
+    document.getElementById("reg-tbody").innerHTML = regs.map(r => `
+        <tr>
+            <td>${esc(r.studentId)}</td>
+            <td>${esc(r.studentName)}</td>
+            <td>${esc(r.eventId)}</td>
+            <td>${esc(r.eventName)}</td>
+            <td><span class="badge badge-green">Confirmed</span></td>
+            <td>${cancelButton(r)}</td>
+        </tr>`).join("");
+
+    document.getElementById("no-queue-msg").style.display = waiting.length ? "none" : "block";
+    document.getElementById("queue-tbody").innerHTML = waiting.map((w, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${esc(w.studentId)}</td>
+            <td>${esc(w.studentName)}</td>
+            <td>${esc(w.eventName)}</td>
+            <td>${cancelButton(w)}</td>
+        </tr>`).join("");
+}
+
+async function registerStudent(e) {
+    e.preventDefault();
+    const result = await api("register", {
+        student: document.getElementById("reg-student").value,
+        event: document.getElementById("reg-event").value
+    });
+    if (result) showAlert(result.msg, !result.ok ? "danger" : result.msg.includes("waiting") ? "warning" : "success");
+    loadAll();
+}
+
+async function cancelReg(button) {
+    const student = button.dataset.student;
+    const event = button.dataset.event;
+    if (!confirm("Cancel " + student + " from " + event + "?")) return;
+    showResult(await api("cancel", { student, event }));
+    loadAll();
+}
+
+async function undoLast() {
+    showResult(await api("undo"));
+    loadAll();
+}
+
+loadAll();
+</script>
+</body>
+</html>

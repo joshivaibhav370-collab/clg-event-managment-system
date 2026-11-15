@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html" class="active">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Schedule</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Event Schedule &amp; Conflict Detection</div>
+
+            <div id="alert-box"></div>
+
+            <!-- Conflict Checker -->
+            <div class="section-box">
+                <h2>Check Schedule Conflict</h2>
+                <p class="text-muted mb-10">Enter the details of a new event to check for scheduling conflicts (same venue, same date, overlapping time).</p>
+                <form id="conflict-form" onsubmit="checkConflict(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="c-venue">Venue *</label>
+                            <input type="text" id="c-venue" placeholder="e.g. Lab-1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="c-date">Date *</label>
+                            <input type="date" id="c-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="c-start">Start Time *</label>
+                            <input type="time" id="c-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="c-end">End Time *</label>
+                            <input type="time" id="c-end" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Check Conflict</button>
+                </form>
+                <div id="conflict-result" class="mt-10"></div>
+            </div>
+
+            <!-- Filter by date -->
+            <div class="section-box">
+                <h2>Event Schedule</h2>
+                <div class="search-bar">
+                    <label for="filter-date" style="font-size:13px;">Filter by Date:</label>
+                    <input type="date" id="filter-date" onchange="filterSchedule()">
+                    <input type="text" id="filter-venue" placeholder="Filter by venue..." oninput="filterSchedule()" style="width:160px; padding:6px 10px; border:1px solid #ccc; font-size:13px;">
+                    <button class="btn btn-primary btn-sm" onclick="clearFilter()">Clear Filter</button>
+                </div>
+
+                <table id="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Event ID</th>
+                            <th>Event Name</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Venue</th>
+                            <th>Organizer</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-schedule-msg" style="display:none;">No events found for the selected filter.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script>
+const events = [
+    { id: "E101", name: "Hackathon",          category: "Technical", date: "2026-10-10", start: "10:00", end: "17:00", venue: "Lab-1",         organizer: "CSE Club" },
+    { id: "E102", name: "Dance Battle",        category: "Cultural",  date: "2026-10-12", start: "14:00", end: "18:00", venue: "Auditorium",     organizer: "Cultural Club" },
+    { id: "E103", name: "Cricket Tournament",  category: "Sports",    date: "2026-10-15", start: "09:00", end: "17:00", venue: "College Ground", organizer: "Sports Club" },
+    { id: "E104", name: "Coding Contest",      category: "Technical", date: "2026-10-18", start: "11:00", end: "14:00", venue: "Lab-2",          organizer: "CSE Club" },
+    { id: "E105", name: "Photography Contest", category: "Arts",      date: "2026-10-20", start: "10:00", end: "13:00", venue: "Hall-A",         organizer: "Arts Club" },
+    { id: "E106", name: "Quiz Competition",    category: "Academic",  date: "2026-10-18", start: "15:00", end: "17:00", venue: "Lab-2",          organizer: "Academic Club" },
+];
+
+function timeToMins(t) {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+}
+
+function renderSchedule(data) {
+    const tbody = document.getElementById("schedule-tbody");
+    const noMsg = document.getElementById("no-schedule-msg");
+    if (data.length === 0) { tbody.innerHTML = ""; noMsg.style.display = "block"; return; }
+    noMsg.style.display = "none";
+    // Sort by date then start time
+    data.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+    tbody.innerHTML = data.map(e => `
+        <tr>
+            <td>${e.id}</td>
+            <td>${e.name}</td>
+            <td>${e.category}</td>
+            <td>${e.date}</td>
+            <td>${e.start}</td>
+            <td>${e.end}</td>
+            <td>${e.venue}</td>
+            <td>${e.organizer}</td>
+        </tr>
+    `).join("");
+}
+
+function filterSchedule() {
+    const dateF = document.getElementById("filter-date").value;
+    const venueF = document.getElementById("filter-venue").value.toLowerCase();
+    let filtered = events.filter(e =>
+        (dateF === "" || e.date === dateF) &&
+        (venueF === "" || e.venue.toLowerCase().includes(venueF))
+    );
+    renderSchedule(filtered);
+}
+
+function clearFilter() {
+    document.getElementById("filter-date").value = "";
+    document.getElementById("filter-venue").value = "";
+    renderSchedule([...events]);
+}
+
+function checkConflict(e) {
+    e.preventDefault();
+    const venue = document.getElementById("c-venue").value.trim().toLowerCase();
+    const date  = document.getElementById("c-date").value;
+    const start = timeToMins(document.getElementById("c-start").value);
+    const end   = timeToMins(document.getElementById("c-end").value);
+    const resultDiv = document.getElementById("conflict-result");
+
+    if (start >= end) {
+        resultDiv.innerHTML = '<div class="alert alert-danger">End time must be after start time.</div>';
+        return;
+    }
+
+    const conflicts = events.filter(ev => {
+        if (ev.venue.toLowerCase() !== venue) return false;
+        if (ev.date !== date) return false;
+        const eStart = timeToMins(ev.start);
+        const eEnd   = timeToMins(ev.end);
+        // Overlap: not (new ends before existing starts OR new starts after existing ends)
+        return !(end <= eStart || start >= eEnd);
+    });
+
+    if (conflicts.length === 0) {
+        resultDiv.innerHTML = '<div class="alert alert-success">No conflicts found. The venue is available at the selected date and time.</div>';
+    } else {
+        const list = conflicts.map(c => `<li>${c.id} — ${c.name} (${c.start} to ${c.end})</li>`).join("");
+        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Conflict detected!</strong> The venue is already booked for:<ul style="margin-top:6px;padding-left:16px;">${list}</ul></div>`;
+    }
+}
+
+renderSchedule([...events]);
+</script>
+</body>
+</html>

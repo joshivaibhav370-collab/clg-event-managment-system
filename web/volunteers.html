@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteers - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html" class="active">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Volunteers</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Volunteer Management</div>
+            <div id="alert-box"></div>
+
+            <!-- Add Volunteer Form -->
+            <div class="section-box">
+                <h2 id="form-heading">Add Volunteer</h2>
+                <form id="vol-form" onsubmit="submitVolForm(event)">
+                    <input type="hidden" id="vol-id-hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="vol-name">Name *</label>
+                            <input type="text" id="vol-name" placeholder="e.g. Arun Kumar" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="vol-student-id">Student ID *</label>
+                            <input type="text" id="vol-student-id" placeholder="e.g. S101" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="vol-event">Assigned Event *</label>
+                            <select id="vol-event" required>
+                                <option value="">-- Select Event --</option>
+                                <option>E101 - Hackathon</option>
+                                <option>E102 - Dance Battle</option>
+                                <option>E103 - Cricket Tournament</option>
+                                <option>E104 - Coding Contest</option>
+                                <option>E105 - Photography</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="vol-role">Role</label>
+                            <input type="text" id="vol-role" placeholder="e.g. Registration Desk">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success" id="form-submit-btn">Add Volunteer</button>
+                    <button type="button" class="btn btn-primary" onclick="resetForm()" style="margin-left:8px;">Clear</button>
+                </form>
+            </div>
+
+            <!-- Volunteer List -->
+            <div class="section-box">
+                <h2>All Volunteers</h2>
+                <div class="search-bar">
+                    <input type="text" id="search-vol" placeholder="Search by name or ID..." oninput="filterVols()">
+                    <select id="filter-event" onchange="filterVols()">
+                        <option value="">All Events</option>
+                        <option>E101 - Hackathon</option>
+                        <option>E102 - Dance Battle</option>
+                        <option>E103 - Cricket Tournament</option>
+                        <option>E104 - Coding Contest</option>
+                        <option>E105 - Photography</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vol. ID</th>
+                            <th>Name</th>
+                            <th>Student ID</th>
+                            <th>Assigned Event</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vol-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-vol-msg" style="display:none;">No volunteers found.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script>
+let volunteers = [
+    { id: "VL01", name: "Arun Kumar",   studentId: "S101", event: "E101 - Hackathon",         role: "Registration Desk" },
+    { id: "VL02", name: "Neha Sharma",  studentId: "S102", event: "E102 - Dance Battle",       role: "Stage Management" },
+    { id: "VL03", name: "Vivek Singh",  studentId: "S105", event: "E103 - Cricket Tournament", role: "Scoreboard" },
+    { id: "VL04", name: "Pooja Mehta",  studentId: "S104", event: "E101 - Hackathon",          role: "Refreshments" },
+    { id: "VL05", name: "Rohit Verma",  studentId: "S103", event: "E104 - Coding Contest",     role: "Technical Support" },
+];
+let nextVlid = 6;
+let editingId = null;
+
+function renderVols(data) {
+    const tbody = document.getElementById("vol-tbody");
+    const noMsg = document.getElementById("no-vol-msg");
+    if (data.length === 0) { tbody.innerHTML = ""; noMsg.style.display = "block"; return; }
+    noMsg.style.display = "none";
+    tbody.innerHTML = data.map(v => `
+        <tr>
+            <td>${v.id}</td>
+            <td>${v.name}</td>
+            <td>${v.studentId}</td>
+            <td>${v.event}</td>
+            <td>${v.role || "-"}</td>
+            <td>
+                <button class="btn btn-warning btn-sm" onclick="editVol('${v.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteVol('${v.id}')" style="margin-left:4px;">Remove</button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+function filterVols() {
+    const search = document.getElementById("search-vol").value.toLowerCase();
+    const event  = document.getElementById("filter-event").value;
+    const filtered = volunteers.filter(v =>
+        (v.name.toLowerCase().includes(search) || v.studentId.toLowerCase().includes(search)) &&
+        (event === "" || v.event === event)
+    );
+    renderVols(filtered);
+}
+
+function submitVolForm(e) {
+    e.preventDefault();
+    const name      = document.getElementById("vol-name").value.trim();
+    const studentId = document.getElementById("vol-student-id").value.trim();
+    const event     = document.getElementById("vol-event").value;
+    const role      = document.getElementById("vol-role").value.trim();
+
+    if (editingId) {
+        let v = volunteers.find(x => x.id === editingId);
+        v.name = name; v.studentId = studentId; v.event = event; v.role = role;
+        showAlert("Volunteer updated.", "success");
+        editingId = null;
+        document.getElementById("form-heading").textContent = "Add Volunteer";
+        document.getElementById("form-submit-btn").textContent = "Add Volunteer";
+    } else {
+        const pad = nextVlid < 10 ? "0" : "";
+        volunteers.push({ id: "VL" + pad + nextVlid++, name, studentId, event, role });
+        showAlert("Volunteer added.", "success");
+    }
+    document.getElementById("vol-form").reset();
+    filterVols();
+}
+
+function editVol(id) {
+    const v = volunteers.find(x => x.id === id);
+    if (!v) return;
+    editingId = id;
+    document.getElementById("vol-name").value = v.name;
+    document.getElementById("vol-student-id").value = v.studentId;
+    document.getElementById("vol-event").value = v.event;
+    document.getElementById("vol-role").value = v.role;
+    document.getElementById("form-heading").textContent = "Edit Volunteer — " + v.id;
+    document.getElementById("form-submit-btn").textContent = "Update Volunteer";
+    window.scrollTo(0, 0);
+}
+
+function deleteVol(id) {
+    if (!confirm("Remove volunteer " + id + "?")) return;
+    volunteers = volunteers.filter(v => v.id !== id);
+    showAlert("Volunteer removed.", "danger");
+    filterVols();
+}
+
+function resetForm() {
+    editingId = null;
+    document.getElementById("vol-form").reset();
+    document.getElementById("form-heading").textContent = "Add Volunteer";
+    document.getElementById("form-submit-btn").textContent = "Add Volunteer";
+}
+
+function showAlert(msg, type) {
+    const box = document.getElementById("alert-box");
+    box.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+    setTimeout(() => { box.innerHTML = ""; }, 3000);
+}
+
+filterVols();
+</script>
+</body>
+</html>

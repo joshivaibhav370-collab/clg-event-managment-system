@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Events</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Event Management</div>
+            <div id="alert-box"></div>
+
+            <div class="section-box">
+                <h2>Add New Event</h2>
+                <form id="event-form" onsubmit="addEvent(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="event-id">Event ID *</label>
+                            <input type="text" id="event-id" placeholder="e.g. E106" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-name">Event Name *</label>
+                            <input type="text" id="event-name" placeholder="e.g. Quiz Competition" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="event-date">Date *</label>
+                            <input type="date" id="event-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-venue">Venue *</label>
+                            <input type="text" id="event-venue" placeholder="e.g. Lab-1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event-max">Max Participants *</label>
+                            <input type="number" id="event-max" placeholder="e.g. 50" min="1" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Add Event</button>
+                    <button type="reset" class="btn btn-primary" style="margin-left:8px;">Clear</button>
+                </form>
+            </div>
+
+            <div class="section-box">
+                <h2>All Events</h2>
+                <div class="table-top">
+                    <div class="search-bar">
+                        <input type="text" id="search-input" placeholder="Search event name or ID..." oninput="showEvents()">
+                        <select id="sort-by" onchange="showEvents()">
+                            <option value="id">Sort by ID</option>
+                            <option value="name">Sort by Name</option>
+                            <option value="date">Sort by Date</option>
+                            <option value="registered">Sort by Registered</option>
+                        </select>
+                    </div>
+                    <span id="event-count" class="text-muted"></span>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Event ID</th><th>Event Name</th><th>Date</th><th>Venue</th><th>Max</th><th>Registered</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="events-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-events-msg" style="display:none;">No events found.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+let events = [];   // filled from C++ backend
+
+async function loadEvents() {
+    events = await api("events") || [];
+    showEvents();
+}
+
+function showEvents() {
+    const search = document.getElementById("search-input").value.toLowerCase();
+    const sort = document.getElementById("sort-by").value;
+
+    let list = events.filter(e =>
+        e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
+
+    if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === "date") list.sort((a, b) => a.date.localeCompare(b.date));
+    if (sort === "registered") list.sort((a, b) => b.registered - a.registered);
+
+    document.getElementById("event-count").textContent = "Showing " + list.length + " event(s)";
+    document.getElementById("no-events-msg").style.display = list.length ? "none" : "block";
+    document.getElementById("events-tbody").innerHTML = list.map(e => `
+        <tr>
+            <td>${esc(e.id)}</td>
+            <td>${esc(e.name)}</td>
+            <td>${esc(e.date)}</td>
+            <td>${esc(e.venue)}</td>
+            <td>${e.capacity}</td>
+            <td>${e.registered}</td>
+            <td>${statusBadge(e.registered, e.capacity)}</td>
+        </tr>`).join("");
+}
+
+async function addEvent(e) {
+    e.preventDefault();
+    const result = await api("addEvent", {
+        id: document.getElementById("event-id").value.trim(),
+        name: document.getElementById("event-name").value.trim(),
+        date: document.getElementById("event-date").value,
+        venue: document.getElementById("event-venue").value.trim(),
+        capacity: document.getElementById("event-max").value
+    });
+    showResult(result);
+    if (result && result.ok) {
+        document.getElementById("event-form").reset();
+        loadEvents();
+    }
+}
+
+loadEvents();
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Welcome to Dashboard</div>
+            <div id="alert-box"></div>
+
+            <div class="cards-row">
+                <div class="card"><div class="card-number" id="count-events">-</div><div class="card-label">Total Events</div></div>
+                <div class="card"><div class="card-number" id="count-students">-</div><div class="card-label">Total Students</div></div>
+                <div class="card"><div class="card-number" id="count-registered">-</div><div class="card-label">Confirmed Registrations</div></div>
+                <div class="card"><div class="card-number" id="count-waiting">-</div><div class="card-label">In Waiting List</div></div>
+            </div>
+
+            <div class="section-box">
+                <h2>Upcoming Events</h2>
+                <table>
+                    <thead>
+                        <tr><th>Event ID</th><th>Event Name</th><th>Date</th><th>Venue</th><th>Registered / Max</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="events-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="section-box">
+                <h2>Waiting List</h2>
+                <table>
+                    <thead>
+                        <tr><th>Position</th><th>Student ID</th><th>Student Name</th><th>Event</th></tr>
+                    </thead>
+                    <tbody id="waiting-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-waiting-msg" style="display:none;">No students in waiting list.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+async function loadDashboard() {
+    const stats = await api("stats");
+    if (!stats) return;
+    document.getElementById("count-events").textContent = stats.events;
+    document.getElementById("count-students").textContent = stats.students;
+    document.getElementById("count-registered").textContent = stats.registered;
+    document.getElementById("count-waiting").textContent = stats.waiting;
+
+    const events = await api("events") || [];
+    document.getElementById("events-tbody").innerHTML = events.map(e => `
+        <tr>
+            <td>${esc(e.id)}</td>
+            <td>${esc(e.name)}</td>
+            <td>${esc(e.date)}</td>
+            <td>${esc(e.venue)}</td>
+            <td>${e.registered} / ${e.capacity}</td>
+            <td>${statusBadge(e.registered, e.capacity)}</td>
+        </tr>`).join("");
+
+    const waiting = await api("waiting") || [];
+    document.getElementById("no-waiting-msg").style.display = waiting.length ? "none" : "block";
+    document.getElementById("waiting-tbody").innerHTML = waiting.map((w, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${esc(w.studentId)}</td>
+            <td>${esc(w.studentName)}</td>
+            <td>${esc(w.eventName)}</td>
+        </tr>`).join("");
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

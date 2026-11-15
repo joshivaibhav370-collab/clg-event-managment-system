@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students - CLG Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="sidebar">
+        <div class="logo">CLG Event System</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="events.html">Events</a></li>
+                <li><a href="students.html">Students</a></li>
+                <li><a href="registration.html">Registration</a></li>
+                <li><a href="schedule.html">Schedule</a></li>
+                <li><a href="venues.html">Venues</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1>Students</h1>
+            <div class="user-info">Admin | <a href="#" style="color:#666;">Logout</a></div>
+        </div>
+
+        <div class="content">
+            <div class="page-title">Student Management</div>
+            <div id="alert-box"></div>
+
+            <div class="section-box">
+                <h2>Add New Student</h2>
+                <form id="student-form" onsubmit="addStudent(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="student-id">Student ID *</label>
+                            <input type="text" id="student-id" placeholder="e.g. S107" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="student-name">Full Name *</label>
+                            <input type="text" id="student-name" placeholder="e.g. Rahul Sharma" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="student-dept">Department *</label>
+                            <select id="student-dept" required>
+                                <option value="">-- Select --</option>
+                                <option>CSE</option><option>ECE</option><option>ME</option>
+                                <option>CE</option><option>EE</option><option>IT</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="student-sem">Semester *</label>
+                            <input type="number" id="student-sem" min="1" max="8" placeholder="1 - 8" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Add Student</button>
+                    <button type="reset" class="btn btn-primary" style="margin-left:8px;">Clear</button>
+                </form>
+            </div>
+
+            <div class="section-box">
+                <h2>All Students</h2>
+                <div class="table-top">
+                    <div class="search-bar">
+                        <input type="text" id="search-input" placeholder="Search by name or ID..." oninput="showStudents()">
+                        <select id="filter-dept" onchange="showStudents()">
+                            <option value="">All Departments</option>
+                            <option>CSE</option><option>ECE</option><option>ME</option>
+                            <option>CE</option><option>EE</option><option>IT</option>
+                        </select>
+                    </div>
+                    <span id="student-count" class="text-muted"></span>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Student ID</th><th>Name</th><th>Department</th><th>Semester</th></tr>
+                    </thead>
+                    <tbody id="students-tbody"></tbody>
+                </table>
+                <div class="text-muted mt-10" id="no-students-msg" style="display:none;">No students found.</div>
+            </div>
+        </div>
+
+        <div class="footer">CLG Event Management System &copy; 2026</div>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+let students = [];   // filled from C++ backend
+
+async function loadStudents() {
+    students = await api("students") || [];
+    showStudents();
+}
+
+function showStudents() {
+    const search = document.getElementById("search-input").value.toLowerCase();
+    const dept = document.getElementById("filter-dept").value;
+
+    const list = students.filter(s =>
+        (s.name.toLowerCase().includes(search) || s.id.toLowerCase().includes(search)) &&
+        (dept === "" || s.department === dept));
+
+    document.getElementById("student-count").textContent = "Showing " + list.length + " student(s)";
+    document.getElementById("no-students-msg").style.display = list.length ? "none" : "block";
+    document.getElementById("students-tbody").innerHTML = list.map(s => `
+        <tr>
+            <td>${esc(s.id)}</td>
+            <td>${esc(s.name)}</td>
+            <td>${esc(s.department)}</td>
+            <td>${s.semester}</td>
+        </tr>`).join("");
+}
+
+async function addStudent(e) {
+    e.preventDefault();
+    const result = await api("addStudent", {
+        id: document.getElementById("student-id").value.trim(),
+        name: document.getElementById("student-name").value.trim(),
+        dept: document.getElementById("student-dept").value,
+        semester: document.getElementById("student-sem").value
+    });
+    showResult(result);
+    if (result && result.ok) {
+        document.getElementById("student-form").reset();
+        loadStudents();
+    }
+}
+
+loadStudents();
+</script>
+</body>
+</html>
